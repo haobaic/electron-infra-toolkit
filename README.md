@@ -1,6 +1,6 @@
 # Electron Infra Kit
 
-一个基于 TypeScript 的健壮 Electron 窗口管理库，旨在简化多窗口应用的开发流程。
+一个专为 Electron 应用打造的综合基础设施套件（Infrastructure Kit），包含功能强大的窗口管理器、状态持久化、进程间通信及完整的 TypeScript 支持。
 
 ## ✨ 特性
 
@@ -28,7 +28,7 @@ yarn add electron-infra-kit
 
 ```typescript
 import { app } from "electron";
-import { WindowManager } from "electron-window-manager-kit";
+import { WindowManager } from "electron-infra-kit";
 
 // 1. 初始化管理器配置
 // 你可以在这里定义所有窗口的默认行为
@@ -60,7 +60,7 @@ app.whenReady().then(() => {
 
 ### 2. 管理多个窗口 (Managing Multiple Windows)
 
-`electron-window-manager-kit` 会自动处理窗口的唯一性。如果你尝试用相同的 `name` 创建窗口，它会直接聚焦已存在的窗口，而不是新建一个。
+`electron-infra-kit` 会自动处理窗口的唯一性。如果你尝试用相同的 `name` 创建窗口，它会直接聚焦已存在的窗口，而不是新建一个。
 
 ```typescript
 // 创建设置窗口
@@ -92,7 +92,7 @@ windowManager.send(dashboardId, 'update-data', { status: 'ok' })
 
 // 或者如果你不知道 ID，但知道名字（需结合自定义逻辑查找）
 // 推荐在创建时保存 ID，或者使用 WindowStore 获取
-import { WindowStore } from 'electron-window-manager-kit'
+import { WindowStore } from 'electron-infra-kit'
 
 const windows = WindowStore.getAllWindows()
 // 遍历查找特定窗口...

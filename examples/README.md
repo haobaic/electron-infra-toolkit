@@ -1,41 +1,44 @@
-# 示例运行指南
+# Electron Infra Kit 示例指南
 
-这个目录包含了 `electron-infra-kit` 的使用示例。
+本目录包含 `electron-infra-kit` 的详细使用示例。代码位于不同的子目录中，按模块功能分类。
 
-由于本项目本身是一个库，示例代码直接引用了构建后的 `dist/index.umd.js` 文件。
+## 📁 目录结构
 
-## 如何运行示例？
+- **`window-manager/`**: 核心窗口管理模块的示例
+  - `01-basic-usage.js`: 基础入门。包含初始化、创建窗口、防止重复创建。
+  - `02-ipc-communication.js`: 进阶交互。演示如何使用 `windowManager.send` 进行窗口间通信。
+  - `03-custom-implementation.js`: 高级封装。演示如何通过继承 `WindowManager` 类来封装特定业务（如登录窗、播放器）。
 
-你需要一个基本的 Electron 环境来运行这些代码。
+## 🏃 如何运行
 
-1. **在你的 Electron 项目中**：
-   将代码复制到你的 `main.js` 或相关文件中。
+由于这些示例直接引用了构建后的库文件 (`dist/index.umd.js`)，请确保在运行前已执行构建。
 
-2. **在本仓库中测试**：
-   你可以使用 `electron` 直接运行 `basic-usage.js`（需要确保已安装依赖并构建）。
+1. **构建库文件** (在项目根目录):
 
    ```bash
-   # 1. 构建库
    npm run build
-
-   # 2. 运行示例 (确保你全局安装了 electron 或在项目中安装)
-   # Windows
-   .\node_modules\.bin\electron examples/basic-usage.js
-   
-   # Linux/Mac
-   ./node_modules/.bin/electron examples/basic-usage.js
    ```
 
-## 示例文件说明
+2. **运行示例**:
+   使用 `electron` 命令运行对应的 JS 文件。
 
-- **`basic-usage.js`**: 
-  - 包含完整的 Electron 主进程代码。
-  - 演示了初始化、主窗口创建。
-  - 演示了 IPC 通信（主进程 <-> 渲染进程）。
-  - 演示了防止重复创建窗口（设置窗口）。
-  - 演示了带参数的窗口创建（详情页）。
-  - 内嵌了简单的 HTML，直接运行即可看到效果。
+   **Windows:**
 
-- **`custom-class.js`**:
-  - 演示了如何通过继承 `WindowManager` 类来封装特定业务逻辑（如登录窗口、播放器窗口）。
-  - 这是一种更高级、更整洁的代码组织方式。
+   ```powershell
+   # 运行基础示例
+   .\node_modules\.bin\electron examples/window-manager/01-basic-usage.js
+
+   # 运行 IPC 示例
+   .\node_modules\.bin\electron examples/window-manager/02-ipc-communication.js
+   ```
+
+   **macOS / Linux:**
+
+   ```bash
+   # 运行基础示例
+   ./node_modules/.bin/electron examples/window-manager/01-basic-usage.js
+   ```
+
+## 💡 提示
+
+这些示例使用了 `data:text/html` 来加载简单的 UI，因此不需要额外的 HTML 文件。在实际项目中，你可以替换为 `win.loadURL('file://...')` 或 `win.loadURL('http://...')`。
