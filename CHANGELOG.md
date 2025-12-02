@@ -6,7 +6,7 @@
 
 ### 🚀 首次发布 (Initial Release)
 
-- **核心功能**: 正式发布 `electron-infra-kit`，提供完整的 TypeScript 支持。
+- **核心功能**: 正式发布 `electron-infra-toolkit`，提供完整的 TypeScript 支持。
 - **特性列表**:
   - **UUID 管理**: 为每个窗口实例分配唯一的 UUID，同时支持自定义名称。
   - **防重复机制**: 内置逻辑防止同一业务窗口被重复创建（自动聚焦已存在的窗口）。

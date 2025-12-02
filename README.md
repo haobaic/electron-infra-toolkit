@@ -1,4 +1,4 @@
-# Electron Infra Kit
+# Electron Infra Toolkit
 
 一个专为 Electron 应用打造的综合基础设施套件（Infrastructure Kit），包含功能强大的窗口管理器、状态持久化、进程间通信及完整的 TypeScript 支持。
 
@@ -13,11 +13,11 @@
 ## 📦 安装
 
 ```bash
-npm install electron-infra-kit
+npm install electron-infra-toolkit
 # 或者
-pnpm add electron-infra-kit
+pnpm add electron-infra-toolkit
 # 或者
-yarn add electron-infra-kit
+yarn add electron-infra-toolkit
 ```
 
 ## 🚀 使用指南
@@ -28,7 +28,7 @@ yarn add electron-infra-kit
 
 ```typescript
 import { app } from "electron";
-import { WindowManager } from "electron-infra-kit";
+import { WindowManager } from "electron-infra-toolkit";
 
 // 1. 初始化管理器
 const windowManager = new WindowManager();
@@ -60,7 +60,7 @@ app.whenReady().then(() => {
 
 ### 2. 管理多个窗口 (Managing Multiple Windows)
 
-`electron-infra-kit` 会自动处理窗口的唯一性。如果你尝试用相同的 `name` 创建窗口，它会直接聚焦已存在的窗口，而不是新建一个。
+`electron-infra-toolkit` 会自动处理窗口的唯一性。如果你尝试用相同的 `name` 创建窗口，它会直接聚焦已存在的窗口，而不是新建一个。
 
 ```typescript
 // 创建设置窗口
@@ -92,7 +92,7 @@ windowManager.send(dashboardId, 'update-data', { status: 'ok' })
 
 // 或者如果你不知道 ID，但知道名字（需结合自定义逻辑查找）
 // 推荐在创建时保存 ID，或者使用 WindowStore 获取
-import { WindowStore } from 'electron-infra-kit'
+import { WindowStore } from 'electron-infra-toolkit'
 
 const windows = WindowStore.getAllWindows()
 // 遍历查找特定窗口...
@@ -103,7 +103,7 @@ const windows = WindowStore.getAllWindows()
 对于复杂的应用，建议为不同类型的窗口创建单独的类。
 
 ```typescript
-import { WindowManager } from "electron-infra-kit";
+import { WindowManager } from "electron-infra-toolkit";
 
 // 定义一个专门的登录窗口类
 class LoginWindow extends WindowManager {
@@ -136,7 +136,7 @@ loginWin.open();
 在 IPC 处理程序中，使用 `WindowCreator` 可以更安全地创建或恢复窗口。
 
 ```typescript
-import { WindowCreator } from "electron-infra-kit";
+import { WindowCreator } from "electron-infra-toolkit";
 
 // 假设这是你的 IPC 处理函数
 ipcMain.handle("open-detail", async (event, data) => {

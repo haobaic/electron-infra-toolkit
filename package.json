@@ -1,5 +1,5 @@
 {
-  "name": "electron-infra-kit",
+  "name": "electron-infra-toolkit",
   "version": "1.0.0",
   "description": "A comprehensive infrastructure kit for Electron applications, featuring a robust window manager with state persistence, inter-window communication, and full TypeScript support.",
   "main": "dist/index.js",
@@ -39,7 +39,7 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/haobaic/electron-infra-kit.git"
+    "url": "https://github.com/haobaic/electron-infra-toolkit.git"
   },
   "keywords": [
     "electron",

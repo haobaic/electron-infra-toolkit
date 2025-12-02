@@ -1,6 +1,6 @@
-# Electron Infra Kit 示例指南
+# Electron Infra Toolkit 示例指南
 
-本目录包含 `electron-infra-kit` 的详细使用示例。代码位于不同的子目录中，按模块功能分类。
+本目录包含 `electron-infra-toolkit` 的详细使用示例。代码位于不同的子目录中，按模块功能分类。
 
 ## 📁 目录结构
 
