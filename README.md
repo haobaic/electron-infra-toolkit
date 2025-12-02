@@ -30,21 +30,8 @@ yarn add electron-infra-kit
 import { app } from "electron";
 import { WindowManager } from "electron-infra-kit";
 
-// 1. 初始化管理器配置
-// 你可以在这里定义所有窗口的默认行为
-const windowManager = new WindowManager({
-  // 根据环境判断是否开启开发模式（开启后会自动打开 DevTools）
-  isDevelopment: !app.isPackaged,
-  // 所有窗口的默认配置（会被 create 方法传入的配置覆盖）
-  defaultConfig: {
-    width: 1024,
-    height: 768,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    },
-  },
-});
+// 1. 初始化管理器
+const windowManager = new WindowManager();
 
 app.whenReady().then(() => {
   // 2. 创建主窗口
@@ -52,6 +39,19 @@ app.whenReady().then(() => {
     name: "main-window", // 给窗口起个名字，方便后续查找
     title: "我的应用主页",
     url: "https://xxx.com", // 支持加载远程 URL 或本地文件
+
+    // 根据环境判断是否开启开发模式（开启后会自动打开 DevTools）
+    isDevelopment: !app.isPackaged,
+
+    // 所有窗口的默认配置
+    defaultConfig: {
+      width: 1024,
+      height: 768,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    },
   });
 
   console.log("窗口创建成功，ID:", windowId);
@@ -103,19 +103,12 @@ const windows = WindowStore.getAllWindows()
 对于复杂的应用，建议为不同类型的窗口创建单独的类。
 
 ```typescript
-import { WindowManager } from "electron-window-manager-kit";
+import { WindowManager } from "electron-infra-kit";
 
 // 定义一个专门的登录窗口类
 class LoginWindow extends WindowManager {
   constructor() {
-    super({
-      defaultConfig: {
-        width: 400,
-        height: 500,
-        frame: false, // 无边框窗口
-        resizable: false,
-      },
-    });
+    super();
   }
 
   // 封装创建逻辑
@@ -123,6 +116,12 @@ class LoginWindow extends WindowManager {
     return this.create({
       name: "login",
       title: "用户登录",
+      defaultConfig: {
+        width: 400,
+        height: 500,
+        frame: false, // 无边框窗口
+        resizable: false,
+      },
     });
   }
 }
@@ -137,7 +136,7 @@ loginWin.open();
 在 IPC 处理程序中，使用 `WindowCreator` 可以更安全地创建或恢复窗口。
 
 ```typescript
-import { WindowCreator } from "electron-window-manager-kit";
+import { WindowCreator } from "electron-infra-kit";
 
 // 假设这是你的 IPC 处理函数
 ipcMain.handle("open-detail", async (event, data) => {

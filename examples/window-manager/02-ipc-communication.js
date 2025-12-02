@@ -10,12 +10,7 @@ const { WindowManager, WindowStore } = require('../../dist/index.umd.js')
 // 3. 使用 windowManager.send() 进行点对点通信
 // =============================================================================
 
-const windowManager = new WindowManager({
-  isDevelopment: !app.isPackaged,
-  defaultConfig: {
-    webPreferences: { nodeIntegration: true, contextIsolation: false }
-  }
-})
+const windowManager = new WindowManager()
 
 // 发送方窗口 HTML
 const SENDER_HTML = `
@@ -57,6 +52,10 @@ app.whenReady().then(() => {
   // 1. 创建接收方
   const receiverId = windowManager.create({
     name: 'receiver',
+    isDevelopment: !app.isPackaged,
+    defaultConfig: {
+      webPreferences: { nodeIntegration: true, contextIsolation: false }
+    },
     title: '接收方',
     x: 100, y: 100, width: 400, height: 400
   })
@@ -73,13 +72,13 @@ app.whenReady().then(() => {
   // 3. 处理 IPC 转发逻辑
   ipcMain.handle('send-to-receiver', (event, text) => {
     console.log(`[Main] 转发消息: ${text}`)
-    
+
     // 核心 API: windowManager.send(windowId, channel, ...args)
     // 直接将消息发送给指定的窗口 ID
     // 提示: 实际项目中，你可以通过 name 获取 ID
     // const targetId = windowManager.getWindowIdByName('receiver') 
     // 这里我们直接用已知的 receiverId
-    
+
     windowManager.send(receiverId, 'custom-event', { text, from: 'sender' })
   })
 })

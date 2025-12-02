@@ -12,19 +12,7 @@ const { WindowManager, WindowStore } = require('../../dist/index.umd.js')
 // =============================================================================
 
 // 1. 初始化窗口管理器
-const windowManager = new WindowManager({
-  // 开发模式下默认开启 DevTools
-  isDevelopment: !app.isPackaged,
-  // 全局默认配置，应用于所有通过此 manager 创建的窗口
-  defaultConfig: {
-    width: 800,
-    height: 600,
-    webPreferences: {
-      nodeIntegration: true, // 仅演示用，生产环境建议 false
-      contextIsolation: false // 仅演示用，生产环境建议 true
-    }
-  }
-})
+const windowManager = new WindowManager()
 
 const HTML_CONTENT = `
 <!DOCTYPE html>
@@ -62,6 +50,15 @@ app.whenReady().then(() => {
   // 2. 创建主窗口
   const windowId = windowManager.create({
     name: 'main', // 【关键】唯一标识符
+    isDevelopment: !app.isPackaged, // 设置开发模式
+    defaultConfig: { // 设置默认配置
+      width: 800,
+      height: 600,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false
+      }
+    },
     title: '主窗口',
     // 可以在这里覆盖默认配置
     width: 1000,
@@ -80,7 +77,7 @@ app.whenReady().then(() => {
 // 演示：尝试重复创建窗口
 ipcMain.handle('open-second-window', () => {
   console.log('[IPC] 收到打开第二个窗口请求')
-  
+
   // 尝试创建名为 'second' 的窗口
   // 如果再次点击按钮，因为 name 相同，windowManager 会自动聚焦已存在的窗口，而不会新建
   const id = windowManager.create({

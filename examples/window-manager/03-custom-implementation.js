@@ -15,16 +15,7 @@ const { WindowManager, WindowStore } = require('../../dist/index.umd.js')
  */
 class LoginWindowManager extends WindowManager {
   constructor() {
-    super({
-      defaultConfig: {
-        width: 300,
-        height: 450,
-        frame: false, // 无边框
-        resizable: false,
-        alwaysOnTop: true,
-        webPreferences: { nodeIntegration: true, contextIsolation: false }
-      }
-    })
+    super()
   }
 
   /**
@@ -34,9 +25,17 @@ class LoginWindowManager extends WindowManager {
   show() {
     const id = this.create({
       name: 'login-core', // 确保单例
-      title: '用户登录'
+      title: '用户登录',
+      defaultConfig: {
+        width: 300,
+        height: 450,
+        frame: false, // 无边框
+        resizable: false,
+        alwaysOnTop: true,
+        webPreferences: { nodeIntegration: true, contextIsolation: false }
+      }
     })
-    
+
     const win = WindowStore.get(id)
     if (win) {
       win.loadURL('data:text/html,<body style="-webkit-app-region:drag; background:#333; color:white; display:flex; justify-content:center; align-items:center; height:100vh;"><h3>Login Window</h3></body>')
@@ -51,14 +50,7 @@ class LoginWindowManager extends WindowManager {
  */
 class PlayerWindowManager extends WindowManager {
   constructor() {
-    super({
-      defaultConfig: {
-        width: 800,
-        height: 500,
-        backgroundColor: '#000', // 黑色背景防止白屏
-        titleBarStyle: 'hiddenInset'
-      }
-    })
+    super()
   }
 
   playVideo(videoId) {
@@ -66,7 +58,13 @@ class PlayerWindowManager extends WindowManager {
     // 但不同视频会打开新窗口
     const id = this.create({
       name: `player-${videoId}`,
-      title: `正在播放: ${videoId}`
+      title: `正在播放: ${videoId}`,
+      defaultConfig: {
+        width: 800,
+        height: 500,
+        backgroundColor: '#000', // 黑色背景防止白屏
+        titleBarStyle: 'hiddenInset'
+      }
     })
 
     const win = WindowStore.get(id)
