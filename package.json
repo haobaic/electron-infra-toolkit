@@ -36,7 +36,7 @@
     "vite-plugin-dts": "^3.0.0"
   },
   "author": "haobaic",
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/haobaic/electron-infra-toolkit.git"
