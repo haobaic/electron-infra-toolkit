@@ -155,6 +155,28 @@ ipcMain.handle("open-detail", async (event, data) => {
 });
 ```
 
+### 6. IPC Bridge (Advanced IPC)
+
+`ipc-bridge` 模块提供了一种更结构化的方式来处理 IPC 消息，特别适合需要统一管理 API 和处理器的场景。
+
+```typescript
+import { IpcBridge, IpcHandler } from "electron-infra-toolkit";
+
+const bridge = new IpcBridge();
+
+// 1. 定义处理器
+const userHandler = new IpcHandler("user-service", "get-user", (api, data) => {
+  return { id: 1, name: "John Doe" };
+});
+
+// 2. 注册处理器
+bridge.addHandler(userHandler);
+
+// 3. 模拟调用 (通常在 IPC 接收端调用)
+const result = bridge.handle({ name: "user-service" });
+console.log(result); // { id: 1, name: "John Doe" }
+```
+
 ## 📚 API 文档
 
 ### `WindowManager` 类
