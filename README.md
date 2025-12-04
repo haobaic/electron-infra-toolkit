@@ -9,6 +9,7 @@
 - **防重复创建**: 内置机制防止同一业务窗口被重复创建，自动聚焦已存在的窗口。
 - **类型安全**: 提供完整的 TypeScript 类型定义，开发体验极佳。
 - **窗口状态管理**: 轻松获取和管理所有活跃窗口。
+- **多窗口数据同步**: 内置 `WindowBridge` 模块，支持多窗口间的数据实时同步和状态共享。
 
 ## 📦 安装
 
@@ -98,7 +99,26 @@ const windows = WindowStore.getAllWindows()
 // 遍历查找特定窗口...
 ```
 
-### 4. 高级用法：自定义窗口类 (Custom Window Classes)
+### 4. 多窗口数据同步 (WindowBridge)
+
+使用 `WindowBridge` 在不同窗口间共享和同步状态。
+
+```typescript
+import { WindowBridge } from "electron-infra-toolkit";
+
+// 主进程中获取实例
+const bridge = WindowBridge.getInstance();
+
+// 设置共享数据
+bridge.setData("user", { name: "Alice", id: 1 });
+
+// 获取数据
+const user = bridge.getData("user");
+
+// 渲染进程会自动接收到数据变更通知（需配合 preload 使用）
+```
+
+### 5. 高级用法：自定义窗口类 (Custom Window Classes)
 
 对于复杂的应用，建议为不同类型的窗口创建单独的类。
 
@@ -131,7 +151,7 @@ const loginWin = new LoginWindow();
 loginWin.open();
 ```
 
-### 5. 使用 WindowCreator 辅助类 (Safe Creation)
+### 6. 使用 WindowCreator 辅助类 (Safe Creation)
 
 在 IPC 处理程序中，使用 `WindowCreator` 可以更安全地创建或恢复窗口。
 
@@ -153,28 +173,6 @@ ipcMain.handle("open-detail", async (event, data) => {
   // 如果窗口已存在，会自动恢复并聚焦
   creator.createAndShow();
 });
-```
-
-### 6. IPC Bridge (Advanced IPC)
-
-`ipc-bridge` 模块提供了一种更结构化的方式来处理 IPC 消息，特别适合需要统一管理 API 和处理器的场景。
-
-```typescript
-import { IpcBridge, IpcHandler } from "electron-infra-toolkit";
-
-const bridge = new IpcBridge();
-
-// 1. 定义处理器
-const userHandler = new IpcHandler("user-service", "get-user", (api, data) => {
-  return { id: 1, name: "John Doe" };
-});
-
-// 2. 注册处理器
-bridge.addHandler(userHandler);
-
-// 3. 模拟调用 (通常在 IPC 接收端调用)
-const result = bridge.handle({ name: "user-service" });
-console.log(result); // { id: 1, name: "John Doe" }
 ```
 
 ## 📚 API 文档
@@ -200,6 +198,16 @@ console.log(result); // { id: 1, name: "John Doe" }
 - **`WindowStore.has(id)`**: 检查 ID 是否存在。
 - **`WindowStore.getAllWindows()`**: 获取所有当前活跃的窗口映射 `Map<string, BrowserWindow>`。
 - **`WindowStore.getByWebContentsId(id)`**: 通过 WebContents ID 查找窗口 ID。
+
+### `WindowBridge` 类 (New)
+
+多窗口状态同步管理类。
+
+- **`WindowBridge.getInstance()`**: 获取单例实例。
+- **`setData(key, value, windowId?)`**: 设置共享数据，并自动广播给所有窗口。
+- **`getData(key?)`**: 获取指定 key 的数据，或获取所有数据。
+- **`deleteData(key, windowId?)`**: 删除数据。
+- **`setFieldPermission(key, permission)`**: 设置字段级权限（只读、允许的窗口等）。
 
 ## 📄 License
 

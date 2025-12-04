@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
 import { v4 as uuidv4 } from 'uuid'
-
+import { WindowBridge } from '../window-bridge'
 /**
  * WindowStore - 窗口存储管理类
  *
@@ -257,6 +257,11 @@ export default class WindowStore {
       try {
         // 清理反向索引
         WindowStore.windowInstanceIds.delete(window)
+
+        // 🆕 清理数据同步 MessagePort
+        const windowBridge = WindowBridge.getInstance()
+        windowBridge.unregisterWindowPort(windowId)
+
         window.close()
         // destroy 通常在 close 后自动触发，但为了保险可保留
         if (!window.isDestroyed()) {

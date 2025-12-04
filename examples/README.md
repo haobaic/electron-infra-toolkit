@@ -8,6 +8,8 @@
   - `01-basic-usage.js`: 基础入门。包含初始化、创建窗口、防止重复创建。
   - `02-ipc-communication.js`: 进阶交互。演示如何使用 `windowManager.send` 进行窗口间通信。
   - `03-custom-implementation.js`: 高级封装。演示如何通过继承 `WindowManager` 类来封装特定业务（如登录窗、播放器）。
+- **`window-bridge/`**: 多窗口状态同步模块示例
+  - `01-basic-sync.js`: 基础同步。演示主进程与多个窗口间的数据同步与权限控制。
 
 ## 🏃 如何运行
 
@@ -30,6 +32,9 @@
 
    # 运行 IPC 示例
    .\node_modules\.bin\electron examples/window-manager/02-ipc-communication.js
+
+   # 运行 WindowBridge 示例
+   .\node_modules\.bin\electron examples/window-bridge/01-basic-sync.js
    ```
 
    **macOS / Linux:**
@@ -37,6 +42,9 @@
    ```bash
    # 运行基础示例
    ./node_modules/.bin/electron examples/window-manager/01-basic-usage.js
+
+   # 运行 WindowBridge 示例
+   ./node_modules/.bin/electron examples/window-bridge/01-basic-sync.js
    ```
 
 ## 💡 提示

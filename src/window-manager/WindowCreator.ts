@@ -22,6 +22,10 @@ interface FrameConstructor {
 }
 
 // 新增通用窗口创建类
+/**
+ * WindowCreator - 通用窗口创建辅助类
+ * 用于处理窗口创建、恢复、显示以及异常重试逻辑
+ */
 export default class WindowCreator<T = any> {
   private api: WindowManagerApi
   private data: { data: T & { winId?: string } }
@@ -29,6 +33,13 @@ export default class WindowCreator<T = any> {
   private FrameClass: FrameConstructor
   private extraOptions?: (data: T) => object
 
+  /**
+   * 构造函数
+   * @param api WindowManager API 接口
+   * @param data 传递给窗口的数据对象，包含 winId
+   * @param FrameClass 窗口类构造函数
+   * @param extraOptions 可选的额外配置生成函数
+   */
   constructor(
     api: WindowManagerApi,
     data: { data: T & { winId?: string } },
@@ -42,6 +53,10 @@ export default class WindowCreator<T = any> {
     this.extraOptions = extraOptions
   }
 
+  /**
+   * 内部方法：创建窗口
+   * @returns 对象包含窗口ID和是否为新创建标志
+   */
   private createWindow(): { winId: string; isNew: boolean } {
     let isNew = false
     if (!this.api.window.hasById(this.winId)) {
@@ -58,6 +73,13 @@ export default class WindowCreator<T = any> {
     return { winId: this.winId, isNew }
   }
 
+  /**
+   * 内部方法：显示窗口
+   * 处理窗口已销毁的异常情况并尝试重试
+   * @param winId 窗口ID
+   * @param isNew 是否为新创建
+   * @param retryCount 重试计数
+   */
   private showWindow(winId: string, isNew: boolean, retryCount = 0): void {
     if (this.api.window?.isDestroyed(winId)) {
       // 防止无限递归，限制重试次数
@@ -88,6 +110,11 @@ export default class WindowCreator<T = any> {
     }
   }
 
+  /**
+   * 创建并显示窗口
+   * 如果窗口已存在则恢复并聚焦，如果不存在则创建
+   * @returns 窗口ID
+   */
   public createAndShow(): string {
     const { isNew } = this.createWindow()
     this.showWindow(this.winId, isNew)
