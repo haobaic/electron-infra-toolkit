@@ -1,38 +1,84 @@
-const { IpcBridge, IpcHandler } = require('../../dist/index.js'); // Assuming built files are in dist
+const { IpcBridge, IpcHandler } = require('../../dist/index.js');
 
-// Mocking the API object that might be exposed to handlers
-const mockApi = {
-    log: (msg) => console.log(`[API Log]: ${msg}`)
+// ==========================================
+// 1. 模拟基础设施 (Infrastructure)
+// ==========================================
+const mockApp = {
+    quit: () => console.log('App is quitting...'),
+    getVersion: () => '1.0.0'
 };
 
-// 1. Create the Bridge
+const mockWindow = {
+    minimize: (id) => console.log(`Window ${id} minimized`),
+    maximize: (id) => console.log(`Window ${id} maximized`),
+    isMaximized: (id) => false
+};
+
+// ==========================================
+// 2. 初始化 Bridge 并注入依赖
+// ==========================================
 const bridge = new IpcBridge();
-bridge.addApi('logger', mockApi);
 
-// 2. Define Handlers
-const echoHandler = new IpcHandler('echo-service', 'echo', (api, data) => {
-    api.logger.log('Echo handler called');
-    return `Echo: ${data.message}`;
-});
+// 关键点：依赖注入
+// 业务逻辑不需要知道 app 和 window 是如何创建的，只需要知道有这些 API 可用
+bridge.addApi('app', mockApp);
+bridge.addApi('window', mockWindow);
 
-const mathHandler = new IpcHandler('math-service', 'add', (api, data) => {
-    api.logger.log(`Adding ${data.a} + ${data.b}`);
+
+// ==========================================
+// 3. 定义业务处理器 (Business Logic)
+// ==========================================
+
+// 示例 A: 简单的计算服务
+const mathHandler = new IpcHandler('math-add', 'event', (api, data) => {
     return data.a + data.b;
 });
 
-// 3. Register Handlers
-bridge.addHandler(echoHandler);
-bridge.addHandlers([mathHandler]);
+// 示例 B: 依赖外部 API 的服务
+const windowControlHandler = new IpcHandler('window-control', 'event', (api, data) => {
+    const { action, winId } = data;
+    
+    if (action === 'minimize') {
+        api.window.minimize(winId);
+        return { success: true };
+    }
+    
+    if (action === 'maximize') {
+        api.window.maximize(winId);
+        return { success: true };
+    }
+    
+    return { success: false, error: 'Unknown action' };
+});
 
-// 4. Simulate IPC Calls
-console.log('--- Testing Echo Handler ---');
-const echoResult = bridge.handle({ name: 'echo-service', message: 'Hello IPC!' });
-console.log('Result:', echoResult);
+// 示例 C: 获取应用信息的服务
+const appInfoHandler = new IpcHandler('app-info', 'event', (api) => {
+    return {
+        version: api.app.getVersion(),
+        env: 'production'
+    };
+});
 
-console.log('\n--- Testing Math Handler ---');
-const mathResult = bridge.handle({ name: 'math-service', a: 5, b: 3 });
-console.log('Result:', mathResult);
+// ==========================================
+// 4. 注册处理器
+// ==========================================
+bridge.addHandlers([mathHandler, windowControlHandler, appInfoHandler]);
 
-console.log('\n--- Testing Unknown Handler ---');
-const unknownResult = bridge.handle({ name: 'unknown-service' });
-console.log('Result:', unknownResult);
+
+// ==========================================
+// 5. 模拟运行时调用 (Simulation)
+// ==========================================
+console.log('--- 1. 调用数学计算 ---');
+const sum = bridge.handle({ name: 'math-add', a: 10, b: 20 });
+console.log(`10 + 20 = ${sum}`);
+
+console.log('\n--- 2. 调用窗口控制 ---');
+bridge.handle({ 
+    name: 'window-control', 
+    action: 'minimize', 
+    winId: 'win-123' 
+});
+
+console.log('\n--- 3. 获取应用信息 ---');
+const info = bridge.handle({ name: 'app-info' });
+console.log('App Info:', info);

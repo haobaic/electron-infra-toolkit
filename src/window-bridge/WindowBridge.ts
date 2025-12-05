@@ -1,23 +1,17 @@
-import { MessageChannelMain, MessagePortMain, BrowserWindow, ipcMain } from 'electron'
-
-export interface DataChangeEvent {
-  type: 'set' | 'delete' | 'clear'
-  key?: string
-  value?: any
-  oldValue?: any
-  windowId?: string
-  timestamp: number
-}
-
-export interface FieldPermission {
-  readonly: boolean
-  allowedWindows?: string[]
-}
-
-interface DataStoreItem {
-  value: any
-  permission?: FieldPermission
-}
+import {
+  MessageChannelMain,
+  MessagePortMain,
+  BrowserWindow,
+  ipcMain
+} from 'electron'
+import { EventEmitter } from 'events'
+import type {
+  DataChangeEvent,
+  FieldPermission,
+  DataStoreItem,
+  WindowBridgeHandler,
+  BridgeMessageHandler
+} from './window-bridge.type'
 
 /**
  * WindowBridge - 多窗口状态同步与通信桥梁
@@ -26,19 +20,27 @@ interface DataStoreItem {
  * - 静态存储：所有实例共享同一份数据（参考 WindowStore）
  * - MessagePort 广播：高效的窗口间通信
  * - 权限控制：字段级 + 窗口级双重权限
+ * - 消息代理：统一的通信接口 (借鉴 ipc-bridge 思想但用于窗口桥接)
  */
-export default class WindowBridge {
+export default class WindowBridge extends EventEmitter {
   private static instance: WindowBridge
+  private eventName: string = 'window-state-changed'
 
   // ✅ 静态属性：所有实例共享（遵循 WindowStore 模式）
   protected static dataStore: Map<string, DataStoreItem> = new Map()
   protected static windowPorts: Map<string, MessagePortMain> = new Map()
+  // 消息处理器集合
+  protected messageHandlers: Map<string, BridgeMessageHandler> = new Map()
 
-  private constructor() { }
+  private constructor(eventName: string = 'window-state-changed') {
+    super()
+    this.eventName = eventName
+    this.registerDefaultHandlers()
+  }
 
-  static getInstance(): WindowBridge {
+  static getInstance(eventName?: string): WindowBridge {
     if (!WindowBridge.instance) {
-      WindowBridge.instance = new WindowBridge()
+      WindowBridge.instance = new WindowBridge(eventName)
     }
     return WindowBridge.instance
   }
@@ -49,15 +51,22 @@ export default class WindowBridge {
    * @param window BrowserWindow 实例
    */
   registerWindowPort(windowId: string, window: BrowserWindow): void {
+    // Clean up existing port if any (e.g. during reload)
+    this.unregisterWindowPort(windowId)
+
     const { port1, port2 } = new MessageChannelMain()
 
     // port1 保存在主进程，用于发送消息
     WindowBridge.windowPorts.set(windowId, port1)
 
     // port2 发送给渲染进程
-    window.webContents.once('did-finish-load', () => {
+    if (window.webContents.isLoading()) {
+      window.webContents.once('did-finish-load', () => {
+        window.webContents.postMessage('window-bridge-port', null, [port2])
+      })
+    } else {
       window.webContents.postMessage('window-bridge-port', null, [port2])
-    })
+    }
   }
 
   /**
@@ -70,6 +79,34 @@ export default class WindowBridge {
       port.close()
       WindowBridge.windowPorts.delete(windowId)
     }
+  }
+
+  /**
+   * 注册单个事件处理器
+   */
+  registerHandler(handler: WindowBridgeHandler): void {
+    this.on(handler.eventName, handler.callback)
+  }
+
+  /**
+   * 批量注册事件处理器
+   */
+  registerHandlers(handlers: WindowBridgeHandler[]): void {
+    handlers.forEach((handler) => this.registerHandler(handler))
+  }
+
+  /**
+   * 注销单个事件处理器
+   */
+  unregisterHandler(handler: WindowBridgeHandler): void {
+    this.removeListener(handler.eventName, handler.callback)
+  }
+
+  /**
+   * 批量注销事件处理器
+   */
+  unregisterHandlers(handlers: WindowBridgeHandler[]): void {
+    handlers.forEach((handler) => this.unregisterHandler(handler))
   }
 
   /**
@@ -97,7 +134,8 @@ export default class WindowBridge {
   setData(
     key: string,
     value: any,
-    windowId?: string
+    windowId?: string,
+    eventName?: string
   ): { success: boolean; error?: string } {
     const item = WindowBridge.dataStore.get(key)
 
@@ -123,14 +161,16 @@ export default class WindowBridge {
     })
 
     // 广播变更
-    this.broadcastChange({
+    const event: DataChangeEvent = {
       type: 'set',
       key,
       value,
       oldValue,
       windowId,
       timestamp: Date.now()
-    })
+    }
+    this.broadcastChange(event)
+    this.emit(eventName || this.eventName, event)
 
     return { success: true }
   }
@@ -140,7 +180,8 @@ export default class WindowBridge {
    */
   deleteData(
     key: string,
-    windowId?: string
+    windowId?: string,
+    eventName?: string
   ): { success: boolean; error?: string } {
     const item = WindowBridge.dataStore.get(key)
 
@@ -160,16 +201,19 @@ export default class WindowBridge {
     const oldValue = item?.value
     WindowBridge.dataStore.delete(key)
 
-    this.broadcastChange({
+    const event: DataChangeEvent = {
       type: 'delete',
       key,
       oldValue,
       windowId,
       timestamp: Date.now()
-    })
+    }
+    this.broadcastChange(event)
+    this.emit(eventName || this.eventName, event)
 
     return { success: true }
   }
+
 
   /**
    * 设置字段权限
@@ -184,22 +228,68 @@ export default class WindowBridge {
   }
 
   /**
-   * 初始化 IPC 监听器（可选）
-   * 允许渲染进程通过 IPC 直接读写数据
+   * 获取已注册的窗口列表（调试用）
+   * @returns 已注册的窗口ID数组
    */
-  initializeIpc(): void {
-    ipcMain.handle('window-bridge-get', (_, { key } = {}) => this.getData(key))
+  getRegisteredWindows(): string[] {
+    return Array.from(WindowBridge.windowPorts.keys())
+  }
 
-    ipcMain.handle('window-bridge-set', (_, { key, value, windowId }) =>
-      this.setData(key, value, windowId)
-    )
+  /**
+   * 注册消息处理器
+   */
+  registerMessageHandler(handler: BridgeMessageHandler): void {
+    this.messageHandlers.set(handler.name, handler)
+  }
 
-    ipcMain.handle('window-bridge-delete', (_, { key, windowId }) =>
-      this.deleteData(key, windowId)
-    )
+  /**
+   * 注册默认处理器
+   */
+  private registerDefaultHandlers(): void {
+    this.registerMessageHandler({
+      name: 'get',
+      callback: (bridge, { key } = {}) => bridge.getData(key)
+    })
 
-    ipcMain.handle('window-bridge-set-permission', (_, { key, permission }) =>
-      this.setFieldPermission(key, permission)
+    this.registerMessageHandler({
+      name: 'set',
+      callback: (bridge, { key, value, windowId, eventName }) =>
+        bridge.setData(key, value, windowId, eventName)
+    })
+
+    this.registerMessageHandler({
+      name: 'delete',
+      callback: (bridge, { key, windowId, eventName }) =>
+        bridge.deleteData(key, windowId, eventName)
+    })
+
+    this.registerMessageHandler({
+      name: 'set-permission',
+      callback: (bridge, { key, permission }) =>
+        bridge.setFieldPermission(key, permission)
+    })
+  }
+
+  /**
+   * 处理消息
+   */
+  handleMessage(name: string, data: any): any {
+    const handler = this.messageHandlers.get(name)
+    if (handler) {
+      return handler.callback(this, data)
+    }
+    console.warn(`WindowBridge: No handler for message "${name}"`)
+    return null
+  }
+
+  /**
+   * 初始化通信监听器（可选）
+   * 允许渲染进程通过统一通道直接读写数据
+   */
+  initializeListener(): void {
+    // 统一通道，优化通信方式
+    ipcMain.handle('window-bridge-invoke', (_, { name, data }) =>
+      this.handleMessage(name, data)
     )
   }
 

@@ -33,7 +33,7 @@ const HTML_CONTENT = `
     <p>当前窗口 ID: <span id="win-id">...</span></p>
     <hr/>
     <h3>测试功能：</h3>
-    <button onclick="require('electron').ipcRenderer.invoke('open-second-window')">
+    <button onclick="require('electron').ipcRenderer.invoke('renderer-to-main', { name: 'open-second-window' })">
       打开第二个窗口 (防止重复)
     </button>
   </div>
@@ -75,25 +75,29 @@ app.whenReady().then(() => {
 })
 
 // 演示：尝试重复创建窗口
-ipcMain.handle('open-second-window', () => {
-  console.log('[IPC] 收到打开第二个窗口请求')
+// 使用 WindowManager 的 ipcBridge 处理 IPC 请求
+windowManager.ipcBridge.addHandler({
+  name: 'open-second-window',
+  callback: () => {
+    console.log('[IPC] 收到打开第二个窗口请求')
 
-  // 尝试创建名为 'second' 的窗口
-  // 如果再次点击按钮，因为 name 相同，windowManager 会自动聚焦已存在的窗口，而不会新建
-  const id = windowManager.create({
-    name: 'second',
-    title: '第二个窗口 (单例模式)',
-    width: 400,
-    height: 300,
-    alwaysOnTop: true
-  })
+    // 尝试创建名为 'second' 的窗口
+    // 如果再次点击按钮，因为 name 相同，windowManager 会自动聚焦已存在的窗口，而不会新建
+    const id = windowManager.create({
+      name: 'second',
+      title: '第二个窗口 (单例模式)',
+      width: 400,
+      height: 300,
+      alwaysOnTop: true
+    })
 
-  const win = WindowStore.get(id)
-  if (win) {
-    win.loadURL('data:text/html,<h1>我是第二个窗口</h1><p>再次点击主窗口按钮只会聚焦我。</p>')
+    const win = WindowStore.get(id)
+    if (win) {
+      win.loadURL('data:text/html,<h1>我是第二个窗口</h1><p>再次点击主窗口按钮只会聚焦我。</p>')
+    }
+
+    return id
   }
-
-  return id
 })
 
 app.on('window-all-closed', () => {

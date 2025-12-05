@@ -14,7 +14,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // 确保外部化处理那些你不想打包进库的依赖
-      external: ['electron', 'uuid', ...builtinModules, ...builtinModules.map(m => `node:${m}`)],
+      external: ['electron', 'uuid', 'electron-log', ...builtinModules, ...builtinModules.map(m => `node:${m}`)],
       output: {
         globals: {
           electron: 'Electron'

@@ -1,25 +1,6 @@
 import { delay } from '../utils'
 import { BrowserWindow } from 'electron'
-
-export interface WindowManagerApi {
-  window: {
-    hasById(id: string): boolean
-    isDestroyed(id: string): boolean
-    deleteByName(name: string): boolean
-    deleteById(id: string): boolean
-    getTargetWindow(id: string): BrowserWindow | undefined
-    removeWindow(id: string): void
-    show(window: BrowserWindow, id: string): void
-  }
-}
-
-interface Frame {
-  create(config?: any): string
-}
-
-interface FrameConstructor {
-  new(): Frame
-}
+import type { WindowManagerApi, Frame, FrameConstructor } from './window-manager.type'
 
 // 新增通用窗口创建类
 /**

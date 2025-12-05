@@ -23,7 +23,9 @@ const SENDER_HTML = `
     const { ipcRenderer } = require('electron')
     function sendMsg() {
       const text = document.getElementById('msgInput').value
-      ipcRenderer.invoke('send-to-receiver', text)
+      // 使用 WindowManager 统一的 IPC 通道 'renderer-to-main'
+      // 数据格式必须包含 name 字段，对应主进程注册的 handler name
+      ipcRenderer.invoke('renderer-to-main', { name: 'send-to-receiver', text })
     }
   </script>
 </body>
@@ -70,15 +72,17 @@ app.whenReady().then(() => {
   WindowStore.get(senderId).loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(SENDER_HTML)}`)
 
   // 3. 处理 IPC 转发逻辑
-  ipcMain.handle('send-to-receiver', (event, text) => {
-    console.log(`[Main] 转发消息: ${text}`)
+  // 使用 windowManager.ipcBridge 注册处理器，而不是直接使用 ipcMain
+  windowManager.ipcBridge.addHandler({
+    name: 'send-to-receiver',
+    callback: (api, data) => {
+      const { text } = data
+      console.log(`[Main] 转发消息: ${text}`)
 
-    // 核心 API: windowManager.send(windowId, channel, ...args)
-    // 直接将消息发送给指定的窗口 ID
-    // 提示: 实际项目中，你可以通过 name 获取 ID
-    // const targetId = windowManager.getWindowIdByName('receiver') 
-    // 这里我们直接用已知的 receiverId
-
-    windowManager.send(receiverId, 'custom-event', { text, from: 'sender' })
+      // 核心 API: windowManager.send(windowId, channel, ...args)
+      windowManager.send(receiverId, 'custom-event', { text, from: 'sender' })
+      
+      return { success: true }
+    }
   })
 })

@@ -1,15 +1,13 @@
-import { BrowserWindow, shell, BrowserWindowConstructorOptions, app } from 'electron'
+import {
+  BrowserWindow,
+  shell,
+  BrowserWindowConstructorOptions,
+  app
+} from 'electron'
 import WindowEvents from './WindowEvents'
-import { WindowBridge } from '../window-bridge'
-
-export interface WindowManagerConfig {
-  /** 默认浏览器窗口选项 */
-  defaultConfig?: BrowserWindowConstructorOptions
-  /** 开发模式标志 */
-  isDevelopment?: boolean
-  /** Linux 平台标志 */
-  isLinux?: boolean
-}
+import type { WindowManagerConfig } from './window-manager.type'
+import IpcBridge from '../ipc-bridge/IpcBridge'
+import { IpcSetup } from './IpcSetup'
 
 const IS_DEV = !app.isPackaged
 
@@ -20,6 +18,35 @@ const IS_DEV = !app.isPackaged
 export default class WindowManager extends WindowEvents {
   protected config: WindowManagerConfig = {}
   private ready: boolean = false
+  public ipcBridge: IpcBridge
+  private currentIpcChannel: string | null = null
+  private currentIpcSyncChannel: string | null = null
+
+  constructor(config: WindowManagerConfig = {}) {
+    super()
+    this.config = config
+    this.ipcBridge = new IpcBridge()
+    if (this.config.ipc?.autoInit !== false) {
+      this.setupIPC()
+    }
+  }
+
+  /**
+   * 设置 IPC 通信
+   * @param options 可选的 IPC 配置，如果不传则使用 config 中的配置或默认值
+   */
+  public setupIPC(options?: { channel?: string; syncChannel?: string }): void {
+    const result = IpcSetup.setup({
+      config: this.config,
+      ipcBridge: this.ipcBridge,
+      currentIpcChannel: this.currentIpcChannel,
+      currentIpcSyncChannel: this.currentIpcSyncChannel,
+      options
+    })
+
+    this.currentIpcChannel = result.channel
+    this.currentIpcSyncChannel = result.syncChannel
+  }
 
   /**
    * 创建一个新窗口
@@ -50,21 +77,31 @@ export default class WindowManager extends WindowEvents {
       finalConfigIsDev: this.config.isDevelopment
     })
 
-    if (
-      (config?.name && this.hasByName(config?.name)) ||
-      (config?.windowId && this.hasById(config?.windowId))
-    ) {
-      return this.getMainWindowId()!
+    let existingWindowId: string | undefined
+
+    if (config?.name && this.hasByName(config.name)) {
+      existingWindowId = this.getWindowByNameId(config.name)
+    } else if (config?.windowId && this.hasById(config.windowId)) {
+      existingWindowId = config.windowId
+    }
+
+    if (existingWindowId) {
+      const existingWindow = this.getWindowById(existingWindowId)
+      if (!existingWindow || existingWindow.isDestroyed()) {
+        this.removeWindow(existingWindowId)
+      } else {
+        if (existingWindow.isMinimized()) {
+          existingWindow.restore()
+        }
+        existingWindow.focus()
+        return existingWindowId
+      }
     }
 
     const newWindow = this.createBrowserWindow(config)
     const windowId = this.createWindow(newWindow, config)
 
     this.configureWindowBehavior(newWindow, windowId)
-
-    // 🆕 注册数据同步 MessagePort
-    const windowBridge = WindowBridge.getInstance()
-    windowBridge.registerWindowPort(windowId, newWindow)
 
     return windowId
   }
@@ -106,6 +143,10 @@ export default class WindowManager extends WindowEvents {
     })
 
     window.once('ready-to-show', () => this.readyToShow(window))
+
+    window.on('closed', () => {
+      this.removeWindow(windowId)
+    })
   }
 
   readyToShow(window: BrowserWindow): void {
