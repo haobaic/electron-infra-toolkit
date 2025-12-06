@@ -164,3 +164,293 @@ ipcMain.handle("send-message-to-window", (event, windowName, message) => {
   return { success: false, error: "Window not found" };
 });
 ```
+
+## API 参考
+
+### WindowManager 类
+
+#### 构造函数
+```typescript
+new WindowManager(options?: { ipc?: { autoInit?: boolean } })
+```
+
+#### 主要方法
+
+- **`create(config: WindowConfig): string`**
+  - 创建新窗口
+  - `config`: 窗口配置对象，包含以下属性：
+    - `name`: 窗口名称（唯一标识符）
+    - `url`: 窗口加载的 URL
+    - `width`: 窗口宽度（可选，默认 800）
+    - `height`: 窗口高度（可选，默认 600）
+    - `webPreferences`: Electron WebPreferences 对象（可选）
+    - 其他 BrowserWindow 配置选项
+  - 返回窗口 ID
+
+- **`setupIPC(windowId?: string | { channel?: string; syncChannel?: string }): void`**
+  - 设置窗口的 IPC 通信
+  - `windowId`: 窗口 ID 或配置对象
+
+- **`configureWindowBehavior(windowId: string, behavior: WindowBehaviorConfig): void`**
+  - 配置窗口行为
+  - `windowId`: 窗口 ID
+  - `behavior`: 行为配置对象，包含以下属性：
+    - `closeHandler`: 窗口关闭前的处理函数，返回 boolean
+    - `blurHandler`: 窗口失去焦点时的处理函数
+    - `focusHandler`: 窗口获得焦点时的处理函数
+
+### WindowEvents 类 (继承自 WindowStore)
+
+#### 窗口显示与隐藏
+
+- **`show(window: BrowserWindow, windowId?: string): void`**
+  - 显示窗口
+  - `window`: 窗口对象
+  - `windowId`: 窗口 ID，可选
+
+- **`hide(windowId: string): void`**
+  - 隐藏指定窗口
+  - `windowId`: 窗口 ID
+
+#### 窗口状态检查
+
+- **`isDestroyed(windowId: string): boolean`**
+  - 检查指定窗口是否已被销毁
+  - `windowId`: 窗口 ID
+
+- **`isVisible(windowId: string): boolean`**
+  - 检查指定窗口是否可见
+  - `windowId`: 窗口 ID
+
+- **`isMinimized(windowId: string): boolean`**
+  - 检查指定窗口是否已被最小化
+  - `windowId`: 窗口 ID
+
+- **`isMaximized(windowId: string): boolean`**
+  - 检查指定窗口是否已被最大化
+  - `windowId`: 窗口 ID
+
+- **`fullScreenState(windowId: string): boolean`**
+  - 检查指定窗口是否处于全屏状态
+  - `windowId`: 窗口 ID
+
+#### 窗口操作
+
+- **`minimize(windowId?: string): void`**
+  - 最小化指定窗口
+  - `windowId`: 窗口 ID，可选
+
+- **`restore(windowId: string): void`**
+  - 恢复指定窗口
+  - `windowId`: 窗口 ID
+
+- **`maximize(windowId: string): void`**
+  - 最大化指定窗口
+  - `windowId`: 窗口 ID
+
+- **`unmaximize(windowId: string): void`**
+  - 恢复指定窗口的大小
+  - `windowId`: 窗口 ID
+
+- **`fullScreen(windowId: string): void`**
+  - 切换指定窗口的全屏状态
+  - `windowId`: 窗口 ID
+
+- **`focus(windowId: string): void`**
+  - 给指定窗口设置焦点
+  - `windowId`: 窗口 ID
+
+- **`setMovable(window: BrowserWindow): void`**
+  - 设置窗口是否可移动
+  - `window`: 窗口对象
+
+- **`winClose(windowId: string): void`**
+  - 关闭指定窗口
+  - `windowId`: 窗口 ID
+
+#### 开发者工具操作
+
+- **`openDevTools(windowId: string): void`**
+  - 打开指定窗口的开发者工具
+  - `windowId`: 窗口 ID
+
+- **`isDevToolsOpened(windowId: string): boolean`**
+  - 检查指定窗口的开发者工具是否已打开
+  - `windowId`: 窗口 ID
+
+- **`closeDevTools(windowId: string): void`**
+  - 关闭指定窗口的开发者工具
+  - `windowId`: 窗口 ID
+
+#### 应用程序控制
+
+- **`quit(): void`**
+  - 退出应用程序
+
+#### 窗口大小与位置操作
+
+- **`getWindowSize(): { width: number; height: number }`**
+  - 获取主显示器的工作区域大小
+
+#### 消息发送
+
+- **`send(windowId: string, name: string, data: unknown = ''): void`**
+  - 向指定窗口发送消息
+  - `windowId`: 窗口 ID
+  - `name`: 消息名称
+  - `data`: 消息数据，可选，默认为空字符串
+
+### WindowStore 类
+
+#### 窗口创建与注册
+
+- **`createWindow(window: BrowserWindow, config?: { name?: string; windowId?: string }): string`**
+  - 创建并注册一个新的窗口
+  - `window`: 窗口对象
+  - `config`: 窗口配置，包含名称和窗口ID，可选
+  - 返回窗口ID
+
+#### 窗口获取
+
+- **`getWindowCount(): number`**
+  - 获取所有窗口的数量
+
+- **`getAllWindowKeys(): string[]`**
+  - 获取所有窗口的ID列表
+
+- **`getAllWindows(): BrowserWindow[]`**
+  - 获取所有窗口对象列表
+
+- **`getWindowNames(): Map<string, string>`**
+  - 获取所有窗口名称和ID的映射
+
+- **`getNameByWindowId(windowId: string): string | undefined`**
+  - 根据窗口ID获取窗口名称
+  - `windowId`: 窗口ID
+
+- **`getTargetWindow(windowId?: string): BrowserWindow | undefined`**
+  - 根据窗口ID或名称获取目标窗口
+  - `windowId`: 窗口ID或名称，可选
+
+- **`getCurrentWindow(): BrowserWindow | undefined`**
+  - 获取当前聚焦的窗口
+
+- **`getWindowByNameId(name: string): string | undefined`**
+  - 根据窗口名称获取窗口ID
+  - `name`: 窗口名称
+
+- **`getWindowByName(name: string): BrowserWindow | undefined`**
+  - 根据窗口名称获取窗口对象
+  - `name`: 窗口名称
+
+- **`getWindowById(windowId: string): BrowserWindow | undefined`**
+  - 根据窗口ID获取窗口对象
+  - `windowId`: 窗口ID
+
+- **`getMainWindow(): BrowserWindow | null`**
+  - 获取主窗口对象
+
+#### 窗口操作
+
+- **`updateWindowName(windowId: string, newName: string): void`**
+  - 更新窗口名称
+  - `windowId`: 窗口ID
+  - `newName`: 新窗口名称
+
+- **`removeWindow(windowId: string): void`**
+  - 移除并关闭指定窗口
+  - `windowId`: 窗口ID
+
+#### 窗口存在性检查
+
+- **`hasByName(proposedName: string): boolean`**
+  - 检查是否存在指定名称的窗口
+  - `proposedName`: 窗口名称
+
+- **`hasById(windowId: string): boolean`**
+  - 检查是否存在指定ID的窗口
+  - `windowId`: 窗口ID
+
+#### 窗口删除
+
+- **`deleteByName(proposedName: string): boolean`**
+  - 删除指定名称的窗口
+  - `proposedName`: 窗口名称
+
+- **`deleteById(windowId: string): boolean`**
+  - 删除指定ID的窗口
+  - `windowId`: 窗口ID
+
+#### 窗口ID获取
+
+- **`getWindowId(window: BrowserWindow): string | undefined`**
+  - 根据窗口对象获取窗口ID
+  - `window`: 窗口对象
+
+## 最佳实践
+
+### 1. 窗口命名规范
+
+使用清晰、语义化的窗口名称，便于管理和调试：
+
+```javascript
+// 好的命名
+win.create({ name: 'main-window', ... })
+win.create({ name: 'settings-panel', ... })
+win.create({ name: 'about-dialog', ... })
+
+// 不推荐的命名
+win.create({ name: 'window1', ... })
+win.create({ name: 'win2', ... })
+```
+
+### 2. 窗口生命周期管理
+
+在应用关闭时，确保正确清理所有窗口资源：
+
+```javascript
+app.on('before-quit', () => {
+  const windowManager = WindowManager.getInstance()
+  // 获取所有窗口ID
+  const windowIds = windowManager.getAllWindowKeys()
+  // 关闭所有窗口
+  windowIds.forEach(id => windowManager.removeWindow(id))
+})
+```
+
+### 3. 错误处理
+
+在窗口创建和操作时添加适当的错误处理：
+
+```javascript
+try {
+  const windowId = win.create({
+    name: 'main-window',
+    width: 800,
+    height: 600,
+    url: 'http://localhost:3000'
+  })
+  console.log('窗口创建成功:', windowId)
+} catch (error) {
+  console.error('窗口创建失败:', error)
+}
+```
+
+### 4. 性能优化
+
+避免创建过多窗口，合理利用窗口复用：
+
+```javascript
+// 检查窗口是否已存在，如果存在则显示，否则创建
+const windowName = 'settings-panel'
+if (win.getWindowByName(windowName)) {
+  win.show(win.getWindowByName(windowName), windowName)
+} else {
+  win.create({
+    name: windowName,
+    width: 600,
+    height: 400,
+    url: 'http://localhost:3000/settings'
+  })
+}
+```

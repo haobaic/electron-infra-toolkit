@@ -1,0 +1,35 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "name": "Electron Infra Toolkit API 文档",
+  "includeVersion": true,
+  "readme": "README.md",
+  "excludeNotDocumented": false,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "sort": ["source-order"],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "defaultCategory": "未分类",
+  "categoryOrder": [
+    "窗口管理",
+    "进程间通信",
+    "多窗口同步",
+    "日志模块",
+    "工具函数",
+    "未分类"
+  ],
+  "preserveLinkText": true,
+  "expandObjects": true,
+  "hideGenerator": true,
+  "excludeInternal": false,
+  "validation": {
+    "notExported": false,
+    "notDocumented": false,
+    "invalidLink": true
+  }
+}

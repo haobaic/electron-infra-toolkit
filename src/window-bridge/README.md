@@ -289,51 +289,84 @@ initApp();
 
 ### WindowBridge 类
 
+#### 单例模式
+
+```typescript
+// 获取或创建单例实例
+const windowBridge = WindowBridge.getInstance(eventName?: string);
+```
+- `eventName`: 可选，自定义事件名称，用于数据变化通知，默认为 'window-state-changed'。
+- **注意**：WindowBridge 使用单例模式，确保所有实例共享同一份数据。
+
 #### 构造函数
 
 ```typescript
-new WindowBridge(initialData: Record<string, any>);
+// 私有构造函数，外部无法直接调用
+private constructor(eventName?: string);
 ```
-- `initialData`: 共享状态的初始值，可以是任意 JSON 序列化的对象。
+- **注意**：由于采用单例模式，构造函数是私有的，必须通过 `getInstance()` 方法获取实例。
 
 #### 核心方法
 
-- **`bindWindow(window: Electron.BrowserWindow): void`**
-  - 关联一个 BrowserWindow 实例到 WindowBridge。
+- **`registerWindowPort(windowId: string, window: Electron.BrowserWindow): void`**
+  - 为窗口注册 MessagePort 通信通道。
+  - `windowId`: 窗口唯一标识符。
+  - `window`: Electron BrowserWindow 实例。
   - 必须在窗口创建后调用，确保通信通道建立。
 
-- **`update(field: string, value: any): boolean`**
-  - 更新共享状态的指定字段。
-  - 支持嵌套字段（如 `settings.theme`）。
-  - 无权限或字段不存在时返回 `false`。
+- **`unregisterWindowPort(windowId: string): void`**
+  - 注销窗口的 MessagePort 通信通道。
+  - `windowId`: 窗口唯一标识符。
+  - 用于窗口关闭或重新加载时清理资源。
 
-- **`getData(): Record<string, any>`**
-  - 获取当前完整的共享状态。
+- **`getData(key?: string): any`**
+  - 获取共享状态。
+  - `key`: 可选，指定要获取的字段名，不指定则返回所有数据。
 
-- **`getFieldPermission(field: string): 'readOnly' | 'writeOnly' | 'both' | null`**
-  - 获取指定字段的权限设置。
-  - 若字段不存在则返回 `null`。
+- **`setData(key: string, value: any, windowId?: string, eventName?: string): { success: boolean; error?: string }`**
+  - 设置共享状态（带权限验证）。
+  - `key`: 字段名。
+  - `value`: 要设置的值。
+  - `windowId`: 可选，操作窗口的标识符，用于权限验证。
+  - `eventName`: 可选，自定义事件名称，用于通知数据变化。
+  - 返回值：包含操作结果的对象，`success` 表示操作是否成功，`error` 包含错误信息（如有）。
 
-- **`setFieldPermission(field: string, permission: 'readOnly' | 'writeOnly' | 'both'): void`**
-  - 设置指定字段的操作权限。
-  - 支持递归设置（如设置 `settings` 的权限会影响所有子字段）。
+- **`deleteData(key: string, windowId?: string, eventName?: string): { success: boolean; error?: string }`**
+  - 删除共享状态中的字段（带权限验证）。
+  - `key`: 要删除的字段名。
+  - `windowId`: 可选，操作窗口的标识符，用于权限验证。
+  - `eventName`: 可选，自定义事件名称，用于通知数据变化。
+  - 返回值：包含操作结果的对象，`success` 表示操作是否成功，`error` 包含错误信息（如有）。
 
-- **`canRead(field: string): boolean`**
-  - 检查是否有读取指定字段的权限。
+#### 事件处理器管理
 
-- **`canWrite(field: string): boolean`**
-  - 检查是否有写入指定字段的权限。
+- **`registerHandler(handler: WindowBridgeHandler): void`**
+  - 注册单个事件处理器。
+  - `handler`: 事件处理器对象，包含 `eventName` 和 `callback`。
+
+- **`registerHandlers(handlers: WindowBridgeHandler[]): void`**
+  - 批量注册多个事件处理器。
+  - `handlers`: 事件处理器对象数组。
+
+- **`unregisterHandler(handler: WindowBridgeHandler): void`**
+  - 注销单个事件处理器。
+  - `handler`: 要注销的事件处理器对象。
+
+- **`unregisterHandlers(handlers: WindowBridgeHandler[]): void`**
+  - 批量注销多个事件处理器。
+  - `handlers`: 要注销的事件处理器对象数组。
 
 #### 事件系统
 
-- **`on(event: 'dataChange', callback: (event: DataChangeEvent) => void): void`**
-  - 监听数据变化事件。
-  - `event.field`: 发生变化的字段名。
-  - `event.oldValue`: 字段的旧值。
-  - `event.newValue`: 字段的新值。
+- **`on(event: string, callback: (event: DataChangeEvent) => void): void`**
+  - 监听数据变化事件（继承自 EventEmitter）。
+  - `event`: 事件名称，默认为 'window-state-changed'。
+  - `callback`: 事件回调函数，接收数据变化事件对象。
 
-- **`off(event: 'dataChange', callback: (event: DataChangeEvent) => void): void`**
-  - 移除数据变化事件监听。
+- **`off(event: string, callback: (event: DataChangeEvent) => void): void`**
+  - 移除数据变化事件监听（继承自 EventEmitter）。
+  - `event`: 事件名称，默认为 'window-state-changed'。
+  - `callback`: 要移除的事件回调函数。
 
 ### 数据结构
 
